@@ -1,71 +1,71 @@
 pipeline {
-  agent any
+    agent any
 
-  stages {
-    stage('Build') {
-      steps {
-        sh 'mvn clean package'
-      }
-    }
-
-    stage('Unit and Integration Tests') {
-      steps {
-        sh 'mvn test'
-      }
-    }
-
-    stage('Code Analysis') {
-      steps {
-        withMaven(maven: 'Maven 3.8.1', jdk: 'OpenJDK 11') {
-          sh 'mvn checkstyle:checkstyle'
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
         }
-      }
-    }
 
-    stage('Security Scan') {
-      steps {
-        withMaven(maven: 'Maven 3.8.1', jdk: 'OpenJDK 11') {
-          sh 'mvn dependency-check:check'
+        stage('Unit and Integration Tests') {
+            steps {
+                sh './run_tests.sh'
+            }
         }
-      }
+
+        stage('Code Analysis') {
+            steps {
+                withMaven(maven: 'maven_3_8_1') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                withCredentials([string(credentialsId: 'scanner-token', variable: 'SCANNER_TOKEN')]) {
+                    sh "docker run -e API_KEY=${SCANNER_TOKEN} -v $(pwd):/src registry.hub.docker.com/securecodebox/scanner:latest"
+                }
+            }
+        }
+
+        stage('Deploy to Staging') {
+            steps {
+                sh './deploy.sh staging'
+            }
+        }
+
+        stage('Integration Tests on Staging') {
+            steps {
+                sh './run_integration_tests.sh staging'
+            }
+        }
+
+        stage('Deploy to Production') {
+            steps {
+                sh './deploy.sh production'
+            }
+        }
     }
 
-    stage('Deploy to Staging') {
-      steps {
-        sh 'scp -i /path/to/keypair.pem target/my-app.jar ec2-user@staging:/home/ec2-user'
-      }
-    }
+    post {
+        success {
+            emailext (
+                subject: "Pipeline Successful",
+                body: "The pipeline has run successfully. See attached logs.",
+                to: "yashjangra617@gmail.com",
+                attachmentsPattern: '**/*.log'
+            )
+        }
 
-    stage('Integration Tests on Staging') {
-      steps {
-        sh 'ssh -i /path/to/keypair.pem ec2-user@staging "java -jar my-app.jar"'
-      }
+        failure {
+            emailext (
+                subject: "Pipeline Failed",
+                body: "The pipeline has failed. See attached logs.",
+                to: "yashjangra617@gmail.com",
+                attachmentsPattern: '**/*.log'
+            )
+        }
     }
-
-    stage('Deploy to Production') {
-      steps {
-        sh 'scp -i /path/to/keypair.pem target/my-app.jar ec2-user@production:/home/ec2-user'
-      }
-    }
-  }
-
-  post {
-    success {
-      emailext(
-        to: 'yashjangra617@gmail.com',
-        subject: 'Pipeline succeeded',
-        body: 'The pipeline has succeeded. Please check the logs for details.',
-        attachmentsPattern: 'logs/*'
-      )
-    }
-
-    failure {
-      emailext(
-        to: 'yashjangra617@gmail.com',
-        subject: 'Pipeline failed',
-        body: 'The pipeline has failed. Please check the logs for details.',
-        attachmentsPattern: 'logs/*'
-      )
-    }
-  }
 }
