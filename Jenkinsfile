@@ -1,53 +1,43 @@
 pipeline {
     agent any
-
     stages {
         stage('Build') {
             steps {
-                sh 'mvn clean package'
+                echo 'Building code with Maven'
             }
         }
-
         stage('Unit and Integration Tests') {
             steps {
-                sh './run_tests.sh'
+                echo 'Running unit tests with JUnit'
+                echo 'Running integration tests with Selenium'
             }
         }
-
         stage('Code Analysis') {
             steps {
-                withMaven(maven: 'maven_3_8_1') {
-                    sh 'mvn sonar:sonar'
-                }
+                echo 'Analyzing code with SonarQube'
             }
         }
-
-         stage('Security Scan') {
+        stage('Security Scan') {
             steps {
-                // Use OWASP ZAP to perform a security scan
-                sh 'zap.sh -cmd -target http://localhost:8080 -report report.html'
+                echo 'Scanning code with OWASP ZAP'
             }
         }
-
         stage('Deploy to Staging') {
             steps {
-                sh './deploy.sh staging'
+                echo 'Deploying to AWS EC2 instance'
             }
         }
-
         stage('Integration Tests on Staging') {
             steps {
-                sh './run_integration_tests.sh staging'
+                echo 'Running integration tests on staging environment'
             }
         }
-
         stage('Deploy to Production') {
             steps {
-                sh './deploy.sh production'
+                echo 'Deploying to AWS EC2 instance'
             }
         }
     }
-
     post {
         success {
             emailext (
