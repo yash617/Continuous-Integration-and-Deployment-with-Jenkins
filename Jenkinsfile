@@ -42,9 +42,9 @@ pipeline {
         success {
             emailext (
                 attachLog: true, 
-                body: 'test sucessful.', 
-                subject: 'test', 
-                to: 'yashjangra617@gmail.com '
+                to: 'yashjangra617@gmail.com',
+                subject: 'Pipeline succeeded',
+                body: 'The pipeline has succeeded. Please check the logs for details.',
                 
             )
         }
@@ -54,7 +54,7 @@ pipeline {
                 subject: "Pipeline Failed",
                 body: "The pipeline has failed. See attached logs.",
                 to: "yashjangra617@gmail.com",
-                attachmentsPattern: '**/*.log'
+                attachLog: true,
             )
         }
     }
