@@ -40,10 +40,8 @@ pipeline {
     }
     post {
         success {
-            emailext (
-                subject: "Pipeline Successful",
-                body: "The pipeline has run successfully. See attached logs.",
-                to: "yashjangra617@gmail.com",
+            emailext 
+            (attachLog: true, body: 'test sucessful.', subject: 'test', to: 'yashjangra617@gmail.com '
                 attachmentsPattern: '**/*.log'
             )
         }
