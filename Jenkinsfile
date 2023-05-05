@@ -22,11 +22,10 @@ pipeline {
             }
         }
 
-        stage('Security Scan') {
+         stage('Security Scan') {
             steps {
-                withCredentials([string(credentialsId: 'scanner-token', variable: 'SCANNER_TOKEN')]) {
-                    sh "docker run -e API_KEY=${SCANNER_TOKEN} -v $(pwd):/src registry.hub.docker.com/securecodebox/scanner:latest"
-                }
+                // Use OWASP ZAP to perform a security scan
+                sh 'zap.sh -cmd -target http://localhost:8080 -report report.html'
             }
         }
 
